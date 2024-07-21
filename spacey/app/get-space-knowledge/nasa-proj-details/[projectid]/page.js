@@ -15,7 +15,7 @@ const ProjectID = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`https://thingproxy.freeboard.io/fetch/https://techport.nasa.gov/api/projects/${projectId}`);
+                const response = await fetch(`https://test.cors.workers.dev/?https://techport.nasa.gov/api/projects/${projectId}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
