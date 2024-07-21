@@ -25,7 +25,7 @@ const NasaProjectDetails = () => {
             const apiUrl = `https://data.nasa.gov/resource/bq5k-hbdz.json?$limit=${limit}&$offset=${offset}`;
 
             try {
-                const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
+                const response = await fetch(apiUrl);
                 if (response.status === 503) {
                     setMessage("The Data sources are under maintenance. Sorry for the inconvenience, we will be back soon.");
                 } else if (!response.ok) {
@@ -38,6 +38,7 @@ const NasaProjectDetails = () => {
                 }));
                 // if (data.length > 0){
                 setData(prevData => [...prevData, ...processedResult]);
+                alert('Data fetched successfully');
                 // }
                 // setData(processedResult);
                 setMessage('');
