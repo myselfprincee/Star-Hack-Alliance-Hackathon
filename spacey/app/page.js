@@ -55,7 +55,7 @@ export default function Home() {
         let model = null;
 
         const loader = new GLTFLoader();
-        loader.load('./space_boi/scene.gltf', (gltf) => {
+        loader.load('../space-boi/scene.gltf', (gltf) => {
           model = gltf.scene;
           gltf.scene.traverse((child) => {
             if (child.isMesh) {
