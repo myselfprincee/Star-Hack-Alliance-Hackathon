@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import useStatesStore from '../../Store/Store';
 
 const NasaProjectDetails = () => {
@@ -13,13 +13,8 @@ const NasaProjectDetails = () => {
     const [data, setData] = useState([]);
     const [message, setMessage] = useState('');
     const { setProjectId } = useStatesStore();
-    // const isFirstRender = useRef(true);
 
     useEffect(() => {
-        // if (isFirstRender.current) {
-        //     isFirstRender.current = false;
-        //     return;
-        // }
         const fetchData = async () => {
             setLoading(true);
             const apiUrl = `https://data.nasa.gov/resource/bq5k-hbdz.json?$limit=${limit}&$offset=${offset}`;
@@ -38,7 +33,6 @@ const NasaProjectDetails = () => {
                 }));
                 // if (data.length > 0){
                 setData(prevData => [...prevData, ...processedResult]);
-                alert('Data fetched successfully');
                 // }
                 // setData(processedResult);
                 setMessage('');
