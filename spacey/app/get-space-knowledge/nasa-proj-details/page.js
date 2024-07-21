@@ -13,13 +13,13 @@ const NasaProjectDetails = () => {
     const [data, setData] = useState([]);
     const [message, setMessage] = useState('');
     const { setProjectId } = useStatesStore();
-    const isFirstRender = useRef(true);
+    // const isFirstRender = useRef(true);
 
     useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
+        // if (isFirstRender.current) {
+        //     isFirstRender.current = false;
+        //     return;
+        // }
         const fetchData = async () => {
             setLoading(true);
             const apiUrl = `https://data.nasa.gov/resource/bq5k-hbdz.json?$limit=${limit}&$offset=${offset}`;
