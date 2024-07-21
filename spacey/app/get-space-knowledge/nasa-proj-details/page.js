@@ -25,7 +25,7 @@ const NasaProjectDetails = () => {
             const apiUrl = `https://data.nasa.gov/resource/bq5k-hbdz.json?$limit=${limit}&$offset=${offset}`;
 
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
                 if (response.status === 503) {
                     setMessage("The Data sources are under maintenance. Sorry for the inconvenience, we will be back soon.");
                 } else if (!response.ok) {
