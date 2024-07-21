@@ -121,7 +121,13 @@ export default function Home() {
 
   const fetchCoordinates = async () => {
     try {
-      const response = await fetch('http://api.open-notify.org/iss-now.json');
+      const response = await fetch('https://princegupta.azurewebsites.net/api.open-notify.org/iss-now.json', {
+        headers :{
+          "X-Requested-With": "XMLHttpRequest"
+
+        }
+
+      });
       response.json().then(data => {
         setLongitude(data.iss_position.longitude);
         setLatitude(data.iss_position.latitude);
