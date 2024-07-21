@@ -170,7 +170,7 @@ export default function Home() {
             <button className="font-mono peer outline relative outline-white w-min p-[1px] px-[4px] text-[10px]">
               i
             </button>
-            <p className="font-mono absolute mt-5 right-0 opacity-0 peer-hover:opacity-100 bg-black text-white outline outline-white p-[1px] px-[4px] text-[10px] transition-opacity duration-300">
+            <p className="font-mono absolute mt-5 z-50 right-0 opacity-0 peer-hover:opacity-100 bg-black text-white outline outline-white p-[1px] px-[4px] text-[10px] transition-opacity duration-300">
               ps: This is the live location of the International Space Station. :)
             </p>
           </div>
