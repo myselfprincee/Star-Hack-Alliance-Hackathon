@@ -14,6 +14,7 @@ const nextConfig = {
     env: {
         NASA_API_KEY: process.env.NASA_API_KEY,
         GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+        MAPBOX_API_KEY: process.env.MAPBOX_API_KEY,
     }
 };
 
