@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
     images: {
         domains: ['apod.nasa.gov','www.youtube.com', 'https://princegupta.azurewebsites.net'],
         remotePatterns: [
