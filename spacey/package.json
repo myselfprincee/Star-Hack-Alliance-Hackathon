@@ -7,13 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.16.9",
     "@react-spring/web": "^10.1.2",
     "@tailwindcss/postcss": "^4.3.5",
-    "@tailwindcss/typography": "^0.5.4",
+    "@tailwindcss/typography": "^0.5.20",
     "next": "^16.4.6",
     "react": "^19",
     "react-dom": "^19",
@@ -30,6 +30,6 @@
     "tailwindcss": "^4.3.5"
   },
   "engines": {
-    "node": "20.14.0"
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
   }
 }
