@@ -20,10 +20,6 @@ const useStatesStore = create(persist(
         alphabet: 'A',
         setAlphabet: (newAlphabet) => set({ alphabet: newAlphabet }),
 
-        //nasa project and specific project states
-        projectId: 0,
-        setProjectId : (id) => set({ projectId: id}),
-
         //knowledge page states
         numArr : [],
         setNumArr: (arr) => set((state) => ({ numArr: [...state.numArr, arr] })),

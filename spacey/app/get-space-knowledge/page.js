@@ -80,7 +80,7 @@ const GetSpaceKnowledge = () => {
                         return (
                             <Link className='w-full' key={index} href={card.link || "/get-space-knowledge"}>
                             <div className='flex gap-3 transition-all hover:bg-white group hover:text-black p-2 rounded-md justify-between'>
-                                <Image src={card.imgSrc} className='rounded-lg object-cover select-none pointer-events-none' width={50} height={50} />
+                                <Image src={card.imgSrc} className='rounded-lg object-cover select-none pointer-events-none' width={50} height={50} alt="space_knowledge" />
                                 <div className='w-[95%] select-none'>
                                     <h4>{card.title}</h4>
                                     <p className='text-[10px]'>{card.description}</p>

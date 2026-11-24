@@ -127,11 +127,11 @@ const SpaceQuiz = () => {
                     <Image draggable={false} className='rounded-lg mt-10 select-none pointer-events-none' src='/images/space-exploration.gif' width={500} height={500} alt='quiz' />
                     <Image draggable={false}  className='rounded-lg mt-10 select-none pointer-events-none' src='/images/space-quiz-final.png' width={300} height={500} alt='quiz' />
                     <Image draggable={false}  className='rounded-lg mt-10 select-none pointer-events-none' src='/images/planet-quiz.gif' width={300} height={500} alt='quiz' />
-                    <Image draggable={false} className='rounded-lg mt-10 select-none pointer-events-none w-[300px]' src='/images/hi_space.gif' width={700} height={500} alt='quiz' />
+                    <Image draggable={false} className='rounded-lg mt-10 select-none pointer-events-none w-75' src='/images/hi_space.gif' width={700} height={500} alt='quiz' />
                     </div>
                 </div>
             }
-            {renderQuestion && <div className="scroll-container flex fixed top-[65px] bg-white text-black animate-unfade">
+            {renderQuestion && <div className="scroll-container flex fixed top-16.25 bg-white text-black animate-unfade">
                 <div className="scroll-text">
                     QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME! QUIZ TIME!
                 </div>
@@ -163,7 +163,7 @@ const SpaceQuiz = () => {
             }
 
             {resultPage && !renderQuestion && <div>
-                <div className={`scroll-container flex fixed top-[65px] ${score >= Math.round(initialNum / 2) ? "bg-green-400" : "bg-red-500"}  text-black animate-unfade`}>
+                <div className={`scroll-container flex fixed top-16.25 ${score >= Math.round(initialNum / 2) ? "bg-green-400" : "bg-red-500"}  text-black animate-unfade`}>
                     <div className="scroll-text">
                         QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER! QUIZ OVER!
                     </div>

@@ -1,210 +1,358 @@
 'use client';
 
 import Link from 'next/link';
-import Navbar from "../../Components/Navbar";
-import { useState, useEffect } from 'react';
-import useStatesStore from '../../Store/Store';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
-const MeteoriteLandings = () => {
-    const increaseLimitBy = 10;
-    const initialOffset = 0;
-    const [cardIndexArr, setCardIndexArr] = useState([]);
-    const [cardIndex, setCardIndex] = useState(0);
-    const [limit, setLimit] = useState(increaseLimitBy);
-    const [offset, setOffset] = useState(initialOffset);
-    const [loading, setLoading] = useState(true);
-    const [loadingLocation, setLoadingLocation] = useState(false);
-    const [data, setData] = useState([]);
-    const [message, setMessage] = useState('');
-    const [locationData, setLocationData] = useState([]);
-    const [showLocation, setShowLocation] = useState(false)
+const meteoriteApiUrl = 'https://spacey-nasa-api-proxy.princegupta.workers.dev/api/meteorites-landings';
+const pageSize = 10;
 
+const getCoordinates = (meteorite) => {
+    const latitudeValue = meteorite.geolocation?.latitude ?? meteorite.reclat;
+    const longitudeValue = meteorite.geolocation?.longitude ?? meteorite.reclong;
 
-
-    const GetLocation = async (longitude, latitude, index) => {
-
-        setLoadingLocation(true);
-        const apiUrl = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${longitude}&latitude=${latitude}&access_token=${process.env.MAPBOX_API_KEY}`;
-
-        try {
-            const response = await fetch(apiUrl);
-            const result = await response.json();
-            const newLocation = {
-                index: index,
-                location: result.features.map(feature => feature.properties.full_address)[0] || 'Unknown',
-                flag: result.features[0]?.properties?.context?.country?.country_code || 'Unknown'
-            };
-
-            // Update state with new data while preserving existing data
-            setLocationData(prevLocationData => {
-                // Check if an entry with the same index already exists
-                const exists = prevLocationData.find(location => location.index === newLocation.index);
-
-                // If it exists, return the previous state without adding the new location
-                if (exists) {
-                    return prevLocationData;
-                }
-
-                // If it doesn't exist, add the new location to the state
-                return [...prevLocationData, newLocation];
-            });
-
-            // Clear message
-            setMessage('');
-
-            // Debug output
-            console.log(result.features[0]?.properties?.context?.country?.country_code);
-            console.log(locationData);
-
-        } catch (error) {
-            console.error(error);
-            setMessage('An error occurred while fetching data.');
-        } finally {
-            setLoading(false);
-        }
+    if (
+        latitudeValue === null ||
+        latitudeValue === undefined ||
+        latitudeValue === '' ||
+        longitudeValue === null ||
+        longitudeValue === undefined ||
+        longitudeValue === ''
+    ) {
+        return null;
     }
 
+    const latitude = Number(latitudeValue);
+    const longitude = Number(longitudeValue);
 
-    const { setProjectId } = useStatesStore();
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+    ) {
+        return null;
+    }
+
+    return { latitude, longitude };
+};
+
+const formatMass = (mass) => {
+    if (mass === null || mass === undefined || String(mass).trim() === '') {
+        return 'Unknown';
+    }
+
+    const grams = Number(mass);
+    if (!Number.isFinite(grams) || grams < 0) {
+        return 'Unknown';
+    }
+
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+    return grams >= 1000
+        ? `${formatter.format(grams / 1000)} kg`
+        : `${formatter.format(grams)} g`;
+};
+
+const formatYear = (year) => {
+    const match = String(year ?? '').match(/^\d{4}/);
+    return match ? match[0] : 'Unknown';
+};
+
+const getCountryFlag = (countryCode) => {
+    if (typeof countryCode !== 'string' || !/^[a-z]{2}$/i.test(countryCode)) {
+        return null;
+    }
+
+    return Array.from(countryCode.toUpperCase(), (letter) =>
+        String.fromCodePoint(letter.charCodeAt(0) + 127397)
+    ).join('');
+};
+
+const MeteoriteLandings = () => {
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState([]);
+    const [message, setMessage] = useState('');
+    const [visibleCount, setVisibleCount] = useState(pageSize);
+    const [retryCount, setRetryCount] = useState(0);
+    const [locationStates, setLocationStates] = useState({});
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchData = async () => {
             setLoading(true);
-            const apiUrl = `https://data.nasa.gov/resource/gh4g-9sfh.json?&$limit=${limit}&$offset=${offset}`;
+            setMessage('');
 
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(meteoriteApiUrl);
+
                 if (response.status === 503) {
-                    setMessage("The Data sources are under maintenance. Sorry for the inconvenience, we will be back soon.");
-                } else if (!response.ok) {
-                    console.log('api response was not ok.')
+                    throw new Error('The data source is under maintenance. Please try again later.');
                 }
+                if (!response.ok) {
+                    throw new Error(`Could not load meteorite data (HTTP ${response.status}).`);
+                }
+
                 const result = await response.json();
-                if (data.length > 0) {
-                    setData(prevData => [...prevData, result]);
+                if (!Array.isArray(result)) {
+                    throw new Error('Meteorite data has an unexpected format.');
                 }
-                setData(result)
-                setMessage('');
+
+                if (!cancelled) {
+                    setData(result);
+                    setVisibleCount(pageSize);
+                }
             } catch (error) {
-                console.error(error);
-                setMessage('An error occurred while fetching data.');
+                console.error('Failed to fetch meteorite landings:', error);
+                if (!cancelled) {
+                    setMessage(
+                        error instanceof Error
+                            ? error.message
+                            : 'An error occurred while fetching meteorite data.'
+                    );
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchData();
-    }, [limit, offset]);
+        return () => {
+            cancelled = true;
+        };
+    }, [retryCount]);
 
-    // console.log(data)
-
-    const truncateText = (text, length) => {
-        return text.length > length ? text.substring(0, length) + "..." : text;
-    };
-
-    const loadMoreData = () => {
-        setOffset(prevOffset => prevOffset + increaseLimitBy);
-        setLimit(prevLimit => prevLimit + increaseLimitBy);
-    };
-
-    const weightConversion = (weighInGrams) => {
-        if (weighInGrams < 1000) {
-            return weighInGrams + " grams";
+    const getLocation = async (meteorite, coordinates) => {
+        const token = process.env.MAPBOX_API_KEY;
+        if (!token) {
+            setLocationStates((previous) => ({
+                ...previous,
+                [meteorite.id]: {
+                    status: 'error',
+                    message: 'Location lookup is not configured.',
+                },
+            }));
+            return;
         }
-        return weighInGrams / 1000 + " kg";
-    }
+
+        setLocationStates((previous) => ({
+            ...previous,
+            [meteorite.id]: { status: 'loading' },
+        }));
+
+        const params = new URLSearchParams({
+            longitude: String(coordinates.longitude),
+            latitude: String(coordinates.latitude),
+            access_token: token,
+        });
+
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/search/geocode/v6/reverse?${params}`
+            );
+            if (!response.ok) {
+                throw new Error(`Location lookup failed (HTTP ${response.status}).`);
+            }
+
+            const result = await response.json();
+            const feature = result.features?.[0];
+            setLocationStates((previous) => ({
+                ...previous,
+                [meteorite.id]: {
+                    status: 'success',
+                    address: feature?.properties?.full_address || 'Unknown location',
+                    countryCode: feature?.properties?.context?.country?.country_code?.toUpperCase(),
+                    countryName: feature?.properties?.context?.country?.name,
+                },
+            }));
+        } catch (error) {
+            console.error(`Failed to look up location for meteorite ${meteorite.id}:`, error);
+            setLocationStates((previous) => ({
+                ...previous,
+                [meteorite.id]: {
+                    status: 'error',
+                    message: 'Could not retrieve this location. Please try again.',
+                },
+            }));
+        }
+    };
 
     return (
-        <>
-            <Navbar />
-            <div className="mt-20 text-white w-[90%] mx-auto">
-            <div className='flex gap-2 text-white flex-wrap opacity-50 mb-5 left-0 right-0 mx-auto'><Link href={"/"}>Home </Link><p>{` > `}</p><Link href={"/get-space-knowledge"}> Get Space Knowledge</Link><p>{`>`}</p><Link href={"/get-space-knowledge/meteorite-landings"}>Meteorite Landings</Link></div>
-                <h1 className="text-[20px] my-5">Known Meteorite Landings</h1>
-                {message &&
-                    <>
-                        <svg className='w-50 h-50' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                        </svg>
-                        <p>{message}</p>
-                    </>
-                }
-                <div className="mb-10 lg:flex lg:flex-wrap lg:justify-between lg:w-full">
-                    {data.map((event, Dataindex) => (
-                        <div
-                            key={Dataindex}
-                            className="bg-white lg:w-[48%] text-black my-4 p-3 rounded-lg"
-                            onClick={() => setProjectId(event.projectid)}
-                        >
-                            {/* <Link
-                                href={`/get-space-knowledge/nasa-proj-details/${event.projectid}`}
-                                className="flex flex-col h-full"
-                            > */}
-                            <div className="flex flex-col flex-grow">
-                                <p className='font-semibold my-2 text-[1.3rem]'>{event.name}</p>
-                                <p className="text-[10px] opacity-50">Observed fall :{event.fall == 'Fell' ? "Yes" : "No"}</p>
-                                <p className='text-[15px] font-semibold'>Weight</p>
-                                <p className="text-[10px] opacity-50">{event.mass ? weightConversion(event.mass) : "Unknown"}</p>
-                                {/* <p className="text-[10px] opacity-50">{event.geolocation}</p> */}
-                                <div className='flex justify-between my-2'>
-                                    <div className='flex flex-col justify-between w-[46%]'>
-                                        <p className='text-[18px] font-semibold'>Location</p>
+        <main className="mt-20 mx-auto w-[90%] text-white">
+            <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap gap-2 opacity-60">
+                <Link href="/">Home</Link>
+                <span aria-hidden="true">&gt;</span>
+                <Link href="/get-space-knowledge">Get Space Knowledge</Link>
+                <span aria-hidden="true">&gt;</span>
+                <span aria-current="page">Meteorite Landings</span>
+            </nav>
+
+            <h1 className="my-5 text-2xl font-semibold">Known Meteorite Landings</h1>
+
+            {loading ? (
+                <p role="status" className="py-8">Loading meteorite records...</p>
+            ) : message ? (
+                <div role="alert" className="my-6 rounded-lg bg-white p-5 text-black">
+                    <p>{message}</p>
+                    <button
+                        type="button"
+                        onClick={() => setRetryCount((count) => count + 1)}
+                        className="mt-4 rounded-md bg-black px-4 py-2 text-white"
+                    >
+                        Try again
+                    </button>
+                </div>
+            ) : data.length === 0 ? (
+                <p className="py-8">No meteorite records were returned.</p>
+            ) : (
+                <>
+                    <p className="mb-5 text-sm opacity-70">
+                        Showing {Math.min(visibleCount, data.length).toLocaleString()} of{' '}
+                        {data.length.toLocaleString()} records.
+                    </p>
+
+                    <div className="mb-10 grid gap-4 lg:grid-cols-2">
+                        {data.slice(0, visibleCount).map((meteorite) => {
+                            const coordinates = getCoordinates(meteorite);
+                            const location = locationStates[meteorite.id];
+
+                            return (
+                                <article
+                                    key={meteorite.id}
+                                    className="rounded-lg bg-white p-4 text-black"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
-                                            <p className='text-[10px] opacity-50'>Longitude : {event.geolocation.longitude}</p>
-                                            <p className='text-[10px] opacity-50'>Latitude : {event.geolocation.latitude}</p>
+                                            <h2 className="text-xl font-semibold">
+                                                {meteorite.name || 'Unnamed meteorite'}
+                                            </h2>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                {meteorite.recclass || 'Classification unknown'}
+                                            </p>
                                         </div>
+                                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs">
+                                            {meteorite.fall === 'Fell'
+                                                ? 'Observed fall'
+                                                : meteorite.fall || 'Fall status unknown'}
+                                        </span>
                                     </div>
 
-                                    {
-                                        showLocation && cardIndexArr.includes(Dataindex) ? <>
+                                    <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                                        <div>
+                                            <dt className="text-gray-500">Year</dt>
+                                            <dd className="font-medium">{formatYear(meteorite.year)}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-gray-500">Mass</dt>
+                                            <dd className="font-medium">{formatMass(meteorite.mass)}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-gray-500">Record type</dt>
+                                            <dd className="font-medium">{meteorite.nametype || 'Unknown'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-gray-500">Record ID</dt>
+                                            <dd className="font-medium">{meteorite.id}</dd>
+                                        </div>
+                                    </dl>
 
-                                            {locationData.map((data) => {
-                                                if (data.index == Dataindex) {
-                                                    return (
-                                                        <div className='flex flex-col gap-3 w-[46%]  items-end justify-between'>
-                                                            <Image alt='flag' width={40} height={20} src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${data.flag}.svg`} />
-                                                            <p className='text-[10px] text-black opacity-50 text-balance text-end w-[60%]'>{data.location}</p>
-                                                        </div>
-                                                    )
-                                                }
-                                            })}
-                                        </> :
-                                            <button className='bg-black text-white text-[10px] px-5 rounded-md py-1 my-2 items-center justify-center' onClick={() => {
-                                                setCardIndex(Dataindex);
-                                                setCardIndexArr(prev => [...prev, Dataindex]);
-                                                console.log(cardIndex)
-                                                GetLocation(event.geolocation.longitude, event.geolocation.latitude, Dataindex)
-                                                setShowLocation(true)
+                                    <div className="mt-5 border-t border-gray-200 pt-4">
+                                        <h3 className="font-semibold">Location</h3>
+                                        {coordinates ? (
+                                            <>
+                                                <p className="mt-1 text-sm text-gray-600">
+                                                    Latitude {coordinates.latitude.toFixed(4)}, longitude{' '}
+                                                    {coordinates.longitude.toFixed(4)}
+                                                </p>
+                                                {location?.status === 'success' && (
+                                                    <div className="mt-3">
+                                                        {location.countryCode && getCountryFlag(location.countryCode) && (
+                                                            <span
+                                                                role="img"
+                                                                aria-label={`${location.countryName || location.countryCode} flag`}
+                                                                className="mb-2 block text-4xl leading-none"
+                                                            >
+                                                                {getCountryFlag(location.countryCode)}
+                                                            </span>
+                                                        )}
+                                                        <p className="text-sm">{location.address}</p>
+                                                        {(location.countryName || location.countryCode) && (
+                                                            <p className="mt-1 text-xs text-gray-500">
+                                                                {location.countryName || location.countryCode}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {location?.status === 'error' && (
+                                                    <p role="alert" className="mt-2 text-sm text-red-700">
+                                                        {location.message}
+                                                    </p>
+                                                )}
+                                                {location?.status === 'success' ? (
+                                                    <a
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${coordinates.latitude},${coordinates.longitude}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mt-3 inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm text-white transition-colors hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                                                    >
+                                                        <svg
+                                                            aria-hidden="true"
+                                                            className="h-4 w-4"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        >
+                                                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+                                                            <path d="m9 10 2 2 4-4" />
+                                                        </svg>
+                                                        View on Google Maps
+                                                    </a>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        disabled={location?.status === 'loading'}
+                                                        onClick={() => getLocation(meteorite, coordinates)}
+                                                        className="mt-3 rounded-md bg-black px-4 py-2 text-sm text-white disabled:cursor-wait disabled:opacity-60"
+                                                    >
+                                                        {location?.status === 'loading'
+                                                            ? 'Looking up...'
+                                                            : location?.status === 'error'
+                                                                ? 'Try again'
+                                                                : 'Get location'}
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                Coordinates are not available in the source data.
+                                            </p>
+                                        )}
+                                    </div>
+                                </article>
+                            );
+                        })}
+                    </div>
 
-                                            }}>{loadingLocation && Dataindex == cardIndex ? 'Loading...' : 'Get Location'}</button>
-                                    }
-                                </div>
-
-                                {/* <p className='mt-4' dangerouslySetInnerHTML={{ __html: truncateText(event.description, 200) }}></p> */}
-                            </div>
-                            {/* <button className="text-white bg-black p-3 rounded-lg mt-5 w-full">Read More</button> */}
-                            {/* </Link> */}
-                        </div>
-                    ))}
-                </div>
-
-                {!message && (
-                    <button
-                        disabled={loading}
-                        onClick={loadMoreData}
-                        className={`transition-all w-full p-3 bg-white text-black mb-6 font-semibold rounded-lg ${loading && "opacity-70"}`}
-                    >
-                        {loading ? (
-                            <svg aria-hidden="true" className="w-6 h-6 left-0 right-0 mx-auto text-gray-200 animate-spin dark:text-gray-300 fill-black" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor" />
-                                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill" />
-                            </svg>
-                        ) : (
-                            <p>Load More</p>
-                        )}
-                    </button>
-                )}
-            </div>
-        </>
+                    {visibleCount < data.length && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setVisibleCount((count) => Math.min(count + pageSize, data.length))
+                            }
+                            className="mb-8 w-full rounded-lg bg-white p-3 font-semibold text-black transition-colors hover:bg-gray-200"
+                        >
+                            Load more
+                        </button>
+                    )}
+                </>
+            )}
+        </main>
     );
 };
 

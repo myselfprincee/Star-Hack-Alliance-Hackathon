@@ -71,13 +71,13 @@ const Navbar = () => {
         <div>
           <Link href={"/"}><p className='font-[Fago] bg-transparent font-bold italic text-white text-[2rem]'>{navLogo}</p></Link>
         </div>
-        <div className='flex flex-col gap-[6px] relative z-[11]' onClick={handleClick} onAnimationEnd={handleAnimationEnd}>
-          <div className='h-[2px] w-12 rounded-full bg-white'></div>
-          <animated.div style={springProps} className='h-[2px] w-6 sticky right-0 rounded-full bg-white'></animated.div>
-          <animated.div style={springProps} className='h-[2px] w-5 sticky right-0 rounded-full bg-white'></animated.div>
+        <div className='flex flex-col gap-1.5 relative z-[11]' onClick={handleClick} onAnimationEnd={handleAnimationEnd}>
+          <div className='h-0.5 w-12 rounded-full bg-white'></div>
+          <animated.div style={springProps} className='h-0.5 w-6 sticky right-0 rounded-full bg-white'></animated.div>
+          <animated.div style={springProps} className='h-0.5 w-5 sticky right-0 rounded-full bg-white'></animated.div>
         </div>
       </nav>
-      <animated.div style={showDialog} className={`fixed top-0 z-10 h-[100vh] right-0 bg-black w-full flex items-center justify-center`}>
+      <animated.div style={showDialog} className={`fixed top-0 z-10 h-screen right-0 bg-black w-full flex items-center justify-center`}>
         <ul className="text-center flex flex-col gap-4">
           <li>
             <Link onClick={()=>{setIsClicked(false);}} className="text-black text-[2rem] p-3 block font-[Fago] font-bold bg-white" href="/space-quiz">
@@ -95,7 +95,7 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link onClick={()=>{setIsClicked(false);}} className="text-black p-3 block text-[2rem] font-[Fago] font-bold bg-white" href="/Spac">
+            <Link onClick={()=>{setIsClicked(false);}} className="text-black p-3 block text-[2rem] font-[Fago] font-bold bg-white" href="/about">
               About This Project
             </Link>
           </li>
