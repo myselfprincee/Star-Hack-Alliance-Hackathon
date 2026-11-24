@@ -1,15 +1,60 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source ".";
+@plugin "@tailwindcss/typography";
 
-*{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@utility bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+@utility bg-gradient-conic {
+  background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
 }
 
 body{
   background-color: black;
+}
+
+.knowledge-refresh-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.knowledge-refresh-button::after {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: 36%;
+  height: 2px;
+  background-color: oklch(0.52 0.13 245);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+}
+
+.knowledge-refresh-button[aria-busy="true"]::after {
+  opacity: 1;
+  animation: knowledge-refresh-sweep 950ms linear infinite;
+}
+
+@keyframes knowledge-refresh-sweep {
+  to {
+    transform: translateX(280%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .knowledge-refresh-button[aria-busy="true"]::after {
+    width: 100%;
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
 }
 
 @font-face {
